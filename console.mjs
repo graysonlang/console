@@ -1,3 +1,5 @@
+let _customConsoleFunction;
+
 (function() {
   function numDigits(x) {
     return ((Math.log10((x ^ (x >> 31)) - (x >> 31)) | 0) + 1);
@@ -38,7 +40,7 @@
               // If it's very sparse, only print indices and values.
               const contents = [];
               for (let k of Object.keys(o)) {
-                contents.push(`${k}: ${(o.hasOwnProperty(k) ? _formatObjectHelper(o[k], depth + 1) : undefined)}`);
+                contents.push(`${k}: ${(Object.hasOwn(o, k) ? _formatObjectHelper(o[k], depth + 1) : undefined)}`);
               }
               return `Array(${length}) [${contents.join(", ")}]`;
             }
@@ -46,14 +48,14 @@
           // Dense or partially sparse array, just print out all the values with potential gaps.
           const contents = [];
           for (let i = 0; i < length; ++i) {
-            contents.push((o.hasOwnProperty(i) ? _formatObjectHelper(o[i], depth + 1) : "empty"));
+            contents.push((Object.hasOwn(o, i) ? _formatObjectHelper(o[i], depth + 1) : "empty"));
           }
           return `Array(${length}) [${contents.join(", ")}]`;
         }
         // Handle Objects.
         const contents = [];
         for (let k of Object.getOwnPropertyNames(o)) {
-          contents.push(`${k}: ${(o.hasOwnProperty(k) ? _formatObjectHelper(o[k], depth + 1) : undefined)}`);
+          contents.push(`${k}: ${(Object.hasOwn(o, k) ? _formatObjectHelper(o[k], depth + 1) : undefined)}`);
         }
         return `{${contents.join(", ")}}`;
       } else if (o && (typeof o === "string" || o instanceof String)) {
@@ -173,17 +175,18 @@
     if (arguments.length) _custom_log("warn", ...arguments);
     _console_warn(...arguments);
   };
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (! _customConsoleFunction) {
+      let style = document.createElement("style");
+      style.innerHTML = "#console { font-family: Menlo, Monaco, monospace; white-space: pre-wrap; } #console p { margin: 0; margin-bottom: .5em; }";
+      document.head.appendChild(style);
+      let console_div = document.createElement("div");
+      console_div.id = "console";
+      document.body.appendChild(console_div);
+      registerCustomConsoleFunction((level, s) => { let d=document; d.getElementById("console").appendChild(d.createElement("P")).appendChild(d.createElement("label")).appendChild(d.createTextNode(s)); });
+    }
+  });
 })();
 
-let _customConsoleFunction;
-export function registerCustomConsoleFunction(func) { _customConsoleFunction = func; }
-
-export default function init() {
-  let style = document.createElement("style");
-  style.innerHTML = "#console { font-family: Menlo, Monaco, monospace; white-space: pre-wrap; } #console p { margin: 0; margin-bottom: .5em; }";
-  document.head.appendChild(style);
-  let console_div = document.createElement("div");
-  console_div.id = "console";
-  document.body.appendChild(console_div);
-  registerCustomConsoleFunction((level, s) => { let d=document; d.getElementById("console").appendChild(d.createElement("P")).appendChild(d.createElement("label")).appendChild(d.createTextNode(s)); });
-}
+export default function registerCustomConsoleFunction(func) { _customConsoleFunction = func; }
